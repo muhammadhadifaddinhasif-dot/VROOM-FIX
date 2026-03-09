@@ -1,0 +1,1994 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VroomFix Elite | DIY Mechanic Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- TAMBAH SCRIPT PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0f172a',
+                        darkCard: '#1e293b'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; transition: background-color 0.3s, color 0.3s; }
+        .page-section { display: none; }
+        .active-section { display: block; animation: slideUp 0.4s ease-out; }
+        .active-nav { background: #2563eb !important; color: white !important; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .chat-hidden { transform: scale(0); opacity: 0; pointer-events: none; }
+        .chat-visible { transform: scale(1); opacity: 1; pointer-events: all; }
+        .detail-back-btn { transition: all 0.3s ease; }
+        .detail-back-btn:hover { transform: translateX(-5px); }
+        .media-preview { max-height: 200px; object-fit: cover; }
+        .video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; }
+        .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        .upload-area { border: 2px dashed #cbd5e1; border-radius: 1rem; padding: 2rem; text-align: center; transition: all 0.3s; }
+        .upload-area:hover { border-color: #3b82f6; background: #f8fafc; }
+        .upload-area.dark:hover { border-color: #3b82f6; background: #1e293b; }
+        .edit-mode { border: 2px solid #3b82f6; }
+        .typing-indicator { display: flex; align-items: center; gap: 4px; }
+        .typing-dot { width: 8px; height: 8px; background-color: #93c5fd; border-radius: 50%; animation: typing 1.4s infinite ease-in-out; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-8px); }
+        }
+        .chat-message { max-width: 85%; }
+        .user-message { margin-left: auto; }
+        .ai-message { margin-right: auto; }
+        
+        /* TAMBAH STYLE UNTUK PDF BUTTON */
+        #print-pdf-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+            transition: all 0.3s ease;
+        }
+        #print-pdf-btn:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+        #print-pdf-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        #pdf-success-toast {
+            animation: slideInRight 0.3s ease-out;
+        }
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* TAMBAH STYLE UNTUK SEARCH */
+        .search-container {
+            transition: all 0.3s ease;
+        }
+        .search-container:focus-within {
+            transform: scale(1.02);
+            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.5);
+        }
+        .search-highlight {
+            background-color: #fef08a;
+            color: #1e293b;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .dark .search-highlight {
+            background-color: #fbbf24;
+            color: #0f172a;
+        }
+        .search-result-item {
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+        .search-result-item:hover {
+            border-left-color: #3b82f6;
+            transform: translateX(5px);
+            background-color: #f8fafc;
+        }
+        .dark .search-result-item:hover {
+            background-color: #1e293b;
+        }
+        .clear-search-btn {
+            transition: all 0.2s ease;
+        }
+        .clear-search-btn:hover {
+            transform: scale(1.1);
+        }
+        .search-badge {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-darkBg text-slate-900 dark:text-slate-100">
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-darkCard w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl">
+            <h3 class="text-2xl font-bold mb-6 text-center">Admin Access</h3>
+            <div class="space-y-4">
+                <input type="text" id="adm-user" placeholder="Username" class="w-full p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl outline-none border-2 border-transparent focus:border-blue-500">
+                <input type="password" id="adm-pass" placeholder="Password" class="w-full p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl outline-none border-2 border-transparent focus:border-blue-500">
+                <button onclick="processLogin()" class="w-full bg-blue-600 text-white p-4 rounded-2xl font-bold hover:bg-blue-700">LOGIN</button>
+                <button onclick="closeLogin()" class="w-full text-slate-400 font-bold text-sm">CANCEL</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="fixed left-0 top-0 h-screen w-72 bg-white dark:bg-slate-900 border-r dark:border-slate-800 p-6 z-50">
+        <div class="flex items-center gap-3 mb-10 px-2">
+            <i class="fas fa-car-side text-3xl text-blue-600"></i>
+            <h1 class="text-xl font-extrabold tracking-tighter uppercase">Vroom<span class="text-blue-600">Fix</span></h1>
+        </div>
+
+        <nav class="space-y-1">
+            <button onclick="showPage('home')" id="nav-home" class="nav-btn w-full flex items-center gap-3 p-3.5 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800 transition active-nav">
+                <i class="fas fa-home w-5"></i> <span data-i18n="nav_home">Utama</span>
+            </button>
+            <div class="py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest px-4">Kategori</div>
+            <button onclick="showPage('maintenance')" id="nav-maintenance" class="nav-btn w-full flex items-center gap-3 p-3.5 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                <i class="fas fa-oil-can w-5"></i> <span data-i18n="nav_maint">Maintenance</span>
+            </button>
+            <button onclick="showPage('problems')" id="nav-problems" class="nav-btn w-full flex items-center gap-3 p-3.5 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                <i class="fas fa-exclamation-triangle w-5"></i> <span data-i18n="nav_prob">Problems</span>
+            </button>
+            <button onclick="showPage('tools')" id="nav-tools" class="nav-btn w-full flex items-center gap-3 p-3.5 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                <i class="fas fa-toolbox w-5"></i> <span data-i18n="nav_tools">Tools</span>
+            </button>
+            <button onclick="showPage('safety')" id="nav-safety" class="nav-btn w-full flex items-center gap-3 p-3.5 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                <i class="fas fa-user-shield w-5"></i> <span data-i18n="nav_safety">Safety</span>
+            </button>
+            <button onclick="showPage('habits')" id="nav-habits" class="nav-btn w-full flex items-center gap-3 p-3.5 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                <i class="fas fa-gauge-high w-5"></i> <span data-i18n="nav_habits">Habits</span>
+            </button>
+            <button onclick="showPage('knowledge')" id="nav-knowledge" class="nav-btn w-full flex items-center gap-3 p-3.5 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                <i class="fas fa-book w-5"></i> <span data-i18n="nav_know">Knowledge</span>
+            </button>
+
+            <div class="pt-6 mt-6 border-t dark:border-slate-800">
+                <button onclick="openAdmin()" id="nav-admin" class="nav-btn w-full flex items-center gap-3 p-3.5 rounded-2xl text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/10 transition">
+                    <i class="fas fa-lock w-5"></i> <span data-i18n="nav_admin">Admin Center</span>
+                </button>
+                <button id="logout-btn" onclick="processLogout()" class="hidden w-full flex items-center gap-3 p-3.5 rounded-2xl text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition mt-2">
+                    <i class="fas fa-sign-out-alt w-5"></i> <span>Logout</span>
+                </button>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Header -->
+    <header class="fixed top-0 right-0 left-72 h-20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b dark:border-slate-800 flex items-center justify-between px-10 z-40">
+        <h2 id="header-title" class="text-xl font-bold uppercase tracking-tight">Dashboard</h2>
+        <div class="flex items-center gap-3">
+            <!-- TAMBAH SEARCH BUTTON DI HEADER -->
+            <button onclick="showSearchPage()" class="p-3 rounded-2xl bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:scale-110 transition relative">
+                <i class="fas fa-search"></i>
+                <span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center search-badge">!</span>
+            </button>
+            <button onclick="toggleTheme()" class="p-3 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-yellow-400 hover:scale-110 transition">
+                <i id="theme-icon" class="fas fa-moon"></i>
+            </button>
+            <button onclick="toggleLang()" class="bg-slate-900 dark:bg-blue-600 text-white px-6 py-2.5 rounded-2xl font-bold text-xs shadow-lg">
+                <i class="fas fa-language mr-2"></i> <span id="lang-text">ENGLISH</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="ml-72 pt-28 p-10 min-h-screen">
+        
+        <!-- HOME PAGE -->
+        <section id="page-home" class="page-section active-section">
+            <div class="bg-gradient-to-br from-blue-600 to-indigo-900 rounded-[3rem] p-12 text-white shadow-2xl relative overflow-hidden mb-12">
+                <div class="relative z-10">
+                    <h2 class="text-5xl font-extrabold mb-4 tracking-tighter" data-i18n="hero_t">Mechanic in Your Pocket.</h2>
+                    <p class="text-blue-100 max-w-lg mb-8 text-lg" data-i18n="hero_s">Belajar selok-belok penjagaan kereta dan baiki kerosakan kecil secara DIY dengan 6 modul lengkap.</p>
+                    <a href="https://www.google.com/maps/search/workshop+near+me" target="_blank" class="bg-white text-blue-700 px-8 py-4 rounded-2xl font-bold inline-flex items-center gap-3 hover:scale-105 transition shadow-xl">
+                        <i class="fas fa-map-marker-alt"></i> <span data-i18n="btn_maps">Cari Bengkel Terdekat</span>
+                    </a>
+                </div>
+                <i class="fas fa-wrench absolute -right-20 -bottom-20 text-[20rem] opacity-10 rotate-12"></i>
+            </div>
+            <h3 class="text-2xl font-bold mb-8 flex items-center gap-3" data-i18n="latest_db">Tutorial Terkini</h3>
+            <div id="home-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </section>
+
+        <!-- SEARCH PAGE (TAMBAH PAGE BARU) -->
+        <section id="page-search" class="page-section">
+            <div class="mb-8">
+                <h2 class="text-3xl font-black mb-2 uppercase tracking-tighter flex items-center gap-3">
+                    <i class="fas fa-search text-blue-600"></i>
+                    <span>Carian Tutorial</span>
+                </h2>
+                <p class="text-slate-500 dark:text-slate-400">Cari tutorial, masalah, alatan dan tips kereta</p>
+            </div>
+            
+            <!-- Search Container -->
+            <div class="search-container bg-white dark:bg-darkCard rounded-[2rem] shadow-xl border dark:border-slate-800 overflow-hidden mb-8">
+                <div class="p-6">
+                    <div class="flex gap-4">
+                        <div class="flex-1 relative">
+                            <input type="text" id="search-input" placeholder="Taip untuk mencari... contoh: minyak, bateri, brek, tayar" 
+                                class="w-full p-5 pl-14 rounded-2xl bg-slate-100 dark:bg-slate-800 border-none ring-2 ring-transparent focus:ring-blue-500 outline-none text-lg"
+                                onkeyup="handleSearchKeyup(event)">
+                            <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 text-xl"></i>
+                            <button onclick="clearSearch()" id="clear-search-btn" class="clear-search-btn absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-500 hidden">
+                                <i class="fas fa-times-circle text-xl"></i>
+                            </button>
+                        </div>
+                        <button onclick="performSearch()" class="bg-blue-600 text-white px-8 rounded-2xl font-bold hover:bg-blue-700 transition flex items-center gap-3 text-lg">
+                            <i class="fas fa-play"></i>
+                            <span>RUN</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Search Filters -->
+                    <div class="flex flex-wrap gap-3 mt-6">
+                        <span class="text-sm font-medium text-slate-500 dark:text-slate-400 py-2">Filter:</span>
+                        <button onclick="setSearchFilter('all')" id="filter-all" class="filter-btn px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium transition">Semua</button>
+                        <button onclick="setSearchFilter('maintenance')" id="filter-maintenance" class="filter-btn px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium hover:bg-blue-600 hover:text-white transition">Maintenance</button>
+                        <button onclick="setSearchFilter('problems')" id="filter-problems" class="filter-btn px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium hover:bg-blue-600 hover:text-white transition">Problems</button>
+                        <button onclick="setSearchFilter('tools')" id="filter-tools" class="filter-btn px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium hover:bg-blue-600 hover:text-white transition">Tools</button>
+                        <button onclick="setSearchFilter('safety')" id="filter-safety" class="filter-btn px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium hover:bg-blue-600 hover:text-white transition">Safety</button>
+                        <button onclick="setSearchFilter('habits')" id="filter-habits" class="filter-btn px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium hover:bg-blue-600 hover:text-white transition">Habits</button>
+                        <button onclick="setSearchFilter('knowledge')" id="filter-knowledge" class="filter-btn px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium hover:bg-blue-600 hover:text-white transition">Knowledge</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Search Stats -->
+            <div id="search-stats" class="mb-6 text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                <div id="search-count"></div>
+                <div id="search-time" class="text-sm"></div>
+            </div>
+            
+            <!-- Search Results -->
+            <div id="search-results" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            
+            <!-- No Results -->
+            <div id="no-search-results" class="hidden text-center py-16">
+                <i class="fas fa-search text-6xl text-slate-300 dark:text-slate-700 mb-4"></i>
+                <h3 class="text-2xl font-bold text-slate-400 dark:text-slate-600 mb-2">Tiada Hasil Carian</h3>
+                <p class="text-slate-400 dark:text-slate-500">Cuba kata kunci lain atau tukar filter kategori</p>
+            </div>
+        </section>
+
+        <!-- CATEGORY VIEWER PAGE -->
+        <section id="page-viewer" class="page-section">
+            <h2 id="viewer-title" class="text-3xl font-black mb-8 uppercase tracking-tighter">Category</h2>
+            <div id="viewer-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </section>
+
+        <!-- DETAIL PAGE -->
+        <section id="page-detail" class="page-section">
+            <button onclick="goBack()" class="detail-back-btn mb-8 flex items-center gap-3 text-blue-600 font-bold text-lg hover:text-blue-800 transition">
+                <i class="fas fa-arrow-left"></i>
+                <span data-i18n="back_btn">Kembali</span>
+            </button>
+            
+            <div class="bg-white dark:bg-darkCard rounded-[2.5rem] shadow-xl border dark:border-slate-800 overflow-hidden">
+                <div class="bg-gradient-to-r from-blue-600 to-indigo-700 p-10 text-white">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span id="detail-category" class="text-xs font-black bg-white/20 px-4 py-1.5 rounded-full uppercase mb-3 inline-block tracking-widest">Category</span>
+                            <h1 id="detail-title" class="text-3xl font-extrabold mb-3">Judul Tutorial</h1>
+                            <p class="text-blue-100 text-sm flex items-center gap-2">
+                                <i class="fas fa-calendar-alt"></i>
+                                Ditambah: <span id="detail-date">-</span>
+                            </p>
+                        </div>
+                        <i id="detail-icon" class="fas fa-wrench text-6xl opacity-20"></i>
+                    </div>
+                </div>
+                
+                <div class="p-10">
+                    <!-- Media Display Area -->
+                    <div id="detail-media" class="mb-10"></div>
+                    
+                    <div class="mb-10">
+                        <h3 class="text-xl font-bold mb-6 flex items-center gap-3 text-slate-700 dark:text-slate-300">
+                            <i class="fas fa-list-ol text-blue-500"></i>
+                            <span>Langkah-langkah Penyelesaian</span>
+                        </h3>
+                        <div id="detail-description" class="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-400 leading-relaxed">
+                            Deskripsi akan dimuat di sini...
+                        </div>
+                    </div>
+                    
+                    <div class="bg-blue-50 dark:bg-blue-900/20 rounded-3xl p-8 border border-blue-100 dark:border-blue-800">
+                        <h4 class="text-lg font-bold mb-4 flex items-center gap-3 text-blue-700 dark:text-blue-400">
+                            <i class="fas fa-lightbulb"></i>
+                            <span>Tips Tambahan</span>
+                        </h4>
+                        <ul id="detail-tips" class="space-y-3 text-sm text-slate-600 dark:text-slate-400">
+                            <li class="flex items-start gap-3">
+                                <i class="fas fa-check text-green-500 mt-1"></i>
+                                <span>Pastikan anda membaca semua langkah sebelum memulakan</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <i class="fas fa-check text-green-500 mt-1"></i>
+                                <span>Gunakan alat keselamatan yang sesuai</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <i class="fas fa-check text-green-500 mt-1"></i>
+                                <span>Jika tidak pasti, rujuk mekanik profesional</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-10 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-slate-50 dark:bg-slate-800 rounded-2xl p-6">
+                    <h4 class="font-bold mb-4 flex items-center gap-3">
+                        <i class="fas fa-tools text-blue-500"></i>
+                        <span>Alatan Diperlukan</span>
+                    </h4>
+                    <div id="detail-tools" class="text-sm text-slate-600 dark:text-slate-400">
+                        <p>Bergantung pada masalah spesifik. Biasanya termasuk alat asas seperti screwdriver, wrench, dan alat keselamatan.</p>
+                    </div>
+                </div>
+                
+                <div class="bg-slate-50 dark:bg-slate-800 rounded-2xl p-6">
+                    <h4 class="font-bold mb-4 flex items-center gap-3">
+                        <i class="fas fa-clock text-blue-500"></i>
+                        <span>Masa Diperlukan</span>
+                    </h4>
+                    <div id="detail-time" class="text-sm text-slate-600 dark:text-slate-400">
+                        <p>30 minit - 2 jam (bergantung pada pengalaman)</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- TAMBAH BUTTON PRINT PDF DI SINI -->
+            <div class="mt-10 flex justify-end gap-4">
+                <button onclick="goBack()" class="detail-back-btn flex items-center gap-3 text-blue-600 font-bold p-4 rounded-2xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition">
+                    <i class="fas fa-arrow-left"></i>
+                    <span data-i18n="back_btn">Kembali</span>
+                </button>
+                <button onclick="printToPDF()" id="print-pdf-btn" class="flex items-center gap-3 bg-green-600 text-white font-bold p-4 rounded-2xl hover:bg-green-700 transition">
+                    <i class="fas fa-file-pdf"></i>
+                    <span>Download PDF</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- ADMIN PAGE -->
+        <section id="page-admin" class="page-section">
+            <div class="bg-white dark:bg-darkCard rounded-[2.5rem] shadow-xl border dark:border-slate-800 overflow-hidden">
+                <div class="bg-slate-900 p-8 text-white flex justify-between items-center">
+                    <div>
+                        <h2 class="text-2xl font-bold">Admin Management</h2>
+                        <p class="text-slate-400 text-sm italic">Add, Edit or Delete tutorials with Images & Videos</p>
+                    </div>
+                    <i class="fas fa-tools text-3xl text-blue-500"></i>
+                </div>
+                <div class="p-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-900/50 p-6 rounded-3xl mb-10 border-2 border-dashed dark:border-slate-700" id="admin-form">
+                        <input type="hidden" id="edit-id">
+                        
+                        <!-- Title Input -->
+                        <div class="md:col-span-2">
+                            <input type="text" id="inp-title" placeholder="Tajuk Masalah / Tutorial" class="w-full p-4 rounded-2xl bg-white dark:bg-slate-800 border-none ring-1 ring-slate-200 dark:ring-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        
+                        <!-- Category Select -->
+                        <select id="inp-cat" class="p-4 rounded-2xl bg-white dark:bg-slate-800 ring-1 ring-slate-200 dark:ring-slate-700 outline-none">
+                            <option value="maintenance">Maintenance</option>
+                            <option value="problems">Problems</option>
+                            <option value="tools">Tools</option>
+                            <option value="safety">Safety</option>
+                            <option value="habits">Habits</option>
+                            <option value="knowledge">Knowledge</option>
+                        </select>
+                        
+                        <!-- Media Type Selector -->
+                        <div class="flex items-center gap-4">
+                            <span class="text-sm font-medium text-slate-600 dark:text-slate-400">Media Type:</span>
+                            <div class="flex gap-2">
+                                <button type="button" onclick="setMediaType('none')" id="media-none" class="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium">None</button>
+                                <button type="button" onclick="setMediaType('image')" id="media-image" class="px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium">Image</button>
+                                <button type="button" onclick="setMediaType('youtube')" id="media-youtube" class="px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium">YouTube</button>
+                                <button type="button" onclick="setMediaType('video')" id="media-video" class="px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium">Video Link</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Media Inputs (Hidden by default) -->
+                        <div id="media-inputs" class="md:col-span-2 space-y-4 hidden">
+                            <!-- Image Upload -->
+                            <div id="image-input" class="hidden">
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Upload Image:</label>
+                                <div class="upload-area dark:bg-slate-800 cursor-pointer" onclick="document.getElementById('file-input').click()">
+                                    <i class="fas fa-cloud-upload-alt text-3xl text-blue-500 mb-2"></i>
+                                    <p class="text-slate-600 dark:text-slate-400">Click to upload image or drag & drop</p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-500 mt-1">PNG, JPG, GIF up to 5MB</p>
+                                    <input type="file" id="file-input" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
+                                </div>
+                                <div id="image-preview" class="mt-3 hidden">
+                                    <img id="preview-image" class="media-preview w-full rounded-xl">
+                                    <button type="button" onclick="removeImage()" class="mt-2 text-red-500 text-sm">
+                                        <i class="fas fa-trash mr-1"></i> Remove Image
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- YouTube Input -->
+                            <div id="youtube-input" class="hidden">
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">YouTube Video URL:</label>
+                                <input type="text" id="inp-youtube" placeholder="https://www.youtube.com/watch?v=..." class="w-full p-4 rounded-2xl bg-white dark:bg-slate-800 ring-1 ring-slate-200 dark:ring-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+                                <p class="text-xs text-slate-500 dark:text-slate-500 mt-1">Paste full YouTube URL or video ID</p>
+                                <div id="youtube-preview" class="mt-3 hidden">
+                                    <div class="video-container rounded-xl overflow-hidden">
+                                        <iframe id="preview-youtube" frameborder="0" allowfullscreen></iframe>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Video Link Input -->
+                            <div id="video-input" class="hidden">
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Video URL (MP4, WebM):</label>
+                                <input type="text" id="inp-video" placeholder="https://example.com/video.mp4" class="w-full p-4 rounded-2xl bg-white dark:bg-slate-800 ring-1 ring-slate-200 dark:ring-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+                                <p class="text-xs text-slate-500 dark:text-slate-500 mt-1">Direct link to video file (MP4, WebM) or embed URL</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Description -->
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Description / Steps:</label>
+                            <textarea id="inp-desc" rows="4" placeholder="Langkah-langkah repair... (Gunakan \n untuk line baru)" class="w-full p-4 rounded-2xl bg-white dark:bg-slate-800 ring-1 ring-slate-200 dark:ring-slate-700 outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                        </div>
+                        
+                        <!-- Tools & Time -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Tools Required:</label>
+                            <input type="text" id="inp-tools" placeholder="Screwdriver, Wrench, Jack..." class="w-full p-4 rounded-2xl bg-white dark:bg-slate-800 ring-1 ring-slate-200 dark:ring-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Time Required:</label>
+                            <input type="text" id="inp-time" placeholder="30 minit - 2 jam" class="w-full p-4 rounded-2xl bg-white dark:bg-slate-800 ring-1 ring-slate-200 dark:ring-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="md:col-span-2 flex gap-4">
+                            <button id="btn-save" onclick="handleSave()" class="flex-1 bg-blue-600 text-white p-4 rounded-2xl font-bold shadow-lg hover:bg-blue-700 transition">SIMPAN DATA</button>
+                            <button id="btn-cancel" onclick="cancelEdit()" class="hidden flex-1 bg-slate-300 dark:bg-slate-700 text-slate-700 dark:text-slate-300 p-4 rounded-2xl font-bold shadow-lg hover:bg-slate-400 dark:hover:bg-slate-600 transition">BATAL EDIT</button>
+                        </div>
+                    </div>
+                    
+                    <!-- FILTER SECTION UNTUK ADMIN -->
+                    <div class="flex items-center gap-4 mb-6 bg-slate-100 dark:bg-slate-800 p-4 rounded-2xl">
+                        <i class="fas fa-filter text-blue-500"></i>
+                        <span class="font-medium">Filter Kategori:</span>
+                        <select id="admin-filter" onchange="renderAdmin()" class="p-3 rounded-xl bg-white dark:bg-slate-700 border-none ring-1 ring-slate-300 dark:ring-slate-600 outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="all">Semua Kategori</option>
+                            <option value="maintenance">Maintenance</option>
+                            <option value="problems">Problems</option>
+                            <option value="tools">Tools</option>
+                            <option value="safety">Safety</option>
+                            <option value="habits">Habits</option>
+                            <option value="knowledge">Knowledge</option>
+                        </select>
+                        <span id="filter-count" class="text-sm text-slate-500 dark:text-slate-400 ml-auto"></span>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="text-slate-400 text-[10px] uppercase font-black border-b dark:border-slate-800">
+                                <tr>
+                                    <th class="p-4">Title</th>
+                                    <th class="p-4">Category</th>
+                                    <th class="p-4">Media</th>
+                                    <th class="p-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- AI Chat Window -->
+    <div id="ai-chat" class="fixed bottom-24 right-6 w-80 md:w-96 bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl border dark:border-slate-800 overflow-hidden z-[100] chat-hidden transition-all duration-300">
+        <div class="bg-gradient-to-r from-blue-600 to-purple-600 p-5 text-white flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-robot text-2xl"></i>
+                <div>
+                    <span class="font-bold">VroomFix AI Assistant</span>
+                    <div class="text-xs text-blue-200">Online • Expert in Car Repair</div>
+                </div>
+            </div>
+            <button onclick="toggleChat()" class="hover:bg-blue-700 w-8 h-8 rounded-full flex items-center justify-center">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div id="chat-msgs" class="h-80 overflow-y-auto p-5 space-y-4 bg-slate-50 dark:bg-slate-950">
+            <div class="ai-message chat-message">
+                <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-2xl rounded-tl-none shadow">
+                    <div class="font-bold mb-1 flex items-center gap-2">
+                        <i class="fas fa-robot"></i> VroomFix AI
+                    </div>
+                    <div class="text-sm">
+                        Hai boss! 👋 Saya AI Assistant VroomFix, pakar dalam DIY car repair dan maintenance. 
+                        Saya akan jawab SEMUA soalan anda dalam chat ini sahaja - tak perlu pergi page lain!
+                        <div class="mt-3 text-blue-200 text-xs">
+                            <div class="font-bold mb-1">Apa saya boleh bantu:</div>
+                            <div>• Maintenance tips & steps</div>
+                            <div>• Problem diagnosis & solutions</div>
+                            <div>• Tool recommendations</div>
+                            <div>• Safety guidelines</div>
+                            <div>• General car knowledge</div>
+                        </div>
+                        <div class="mt-3 text-xs italic">
+                            Tanya apa-apa je! Saya explain full dalam chat ni 😊
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="p-4 bg-white dark:bg-slate-900 flex gap-2 border-t dark:border-slate-800">
+            <input type="text" id="chat-input" placeholder="Tanya apa-apa tentang kereta..." class="w-full p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500" onkeypress="if(event.key === 'Enter') processChat()">
+            <button onclick="processChat()" class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-5 rounded-2xl hover:opacity-90 transition">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+    
+    <!-- AI Button -->
+    <button onclick="toggleChat()" id="ai-chat-btn" class="fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full shadow-2xl flex items-center justify-center text-2xl z-[99] hover:scale-110 active:scale-90 transition shadow-lg">
+        <i class="fas fa-comment-dots"></i>
+    </button>
+
+    <script>
+        // --- DATA & THEME ---
+        const langData = {
+            en: { 
+                nav_home: "Dashboard", nav_maint: "Maintenance", nav_prob: "Common Problems", 
+                nav_tools: "Tools", nav_safety: "Safety", nav_habits: "Habits", 
+                nav_know: "Knowledge", nav_admin: "Admin Center", 
+                hero_t: "Mechanic in Your Pocket.", 
+                hero_s: "Learn DIY car repair and maintenance with our 6 complete modules.", 
+                btn_maps: "Find Workshops", latest_db: "Latest Tutorials",
+                back_btn: "Back"
+            },
+            my: { 
+                nav_home: "Utama", nav_maint: "Penyelenggaraan", nav_prob: "Masalah Lazim", 
+                nav_tools: "Alatan", nav_safety: "Keselamatan", nav_habits: "Tabiat", 
+                nav_know: "Pengetahuan", nav_admin: "Pusat Admin", 
+                hero_t: "Mekanik Dalam Poket.", 
+                hero_s: "Belajar repair dan jaga kereta secara DIY dengan 6 modul lengkap kami.", 
+                btn_maps: "Cari Bengkel", latest_db: "Tutorial Terkini",
+                back_btn: "Kembali"
+            }
+        };
+
+        let currentLang = 'my';
+        let db = JSON.parse(localStorage.getItem('carMasterDB')) || [
+            { 
+                id: 1, 
+                title: 'Check Minyak Hitam', 
+                cat: 'maintenance', 
+                desc: '1. Pastikan kereta sejuk (minimum 10 minit selepas matikan enjin).\n2. Cabut dipstick, lap dengan kain bersih.\n3. Masukkan balik dipstick sehingga penuh.\n4. Cabut semula dan periksa level minyak.\n5. Pastikan level berada antara tanda F (Full) dan L (Low).\n6. Jika rendah, tambah minyak yang sesuai dengan spesifikasi kereta anda.',
+                date: '2024-01-15',
+                mediaType: 'none',
+                mediaData: '',
+                tools: 'Dipstick, Kain Bersih, Minyak Engine',
+                time: '10-15 minit'
+            },
+            { 
+                id: 2, 
+                title: 'Bateri Lemah', 
+                cat: 'problems', 
+                desc: '1. Jika ada bunyi "klik-klik" semasa start, kemungkinan bateri lemah.\n2. Periksa terminal bateri untuk karat atau kotoran.\n3. Bersihkan terminal dengan berus dawai.\n4. Sambungkan jumper cable dengan kereta lain (ikut manual).\n5. Start kereta dan biarkan idling selama 15-20 minit.\n6. Jika masih lemah, hantar ke kedai untuk ujian atau tukar bateri.',
+                date: '2024-01-20',
+                mediaType: 'none',
+                mediaData: '',
+                tools: 'Jumper Cables, Berus Dawai, Multimeter',
+                time: '30-45 minit'
+            },
+            { 
+                id: 3, 
+                title: 'Cara Guna Jack Dengan Selamat', 
+                cat: 'tools', 
+                desc: '1. Pastikan kereta di atas permukaan rata.\n2. Gunakan jack pada titik yang betul (rujuk manual).\n3. Letak wheel chocks pada roda lain.\n4. Angkat kereta perlahan-lahan.\n5. Sentiasa gunakan jack stands untuk sokongan!',
+                date: '2024-02-01',
+                mediaType: 'none',
+                mediaData: '',
+                tools: 'Jack Botol, Jack Stands, Wheel Chocks',
+                time: '10-15 minit'
+            }
+        ];
+
+        let isChatOpen = false;
+        let lastPage = 'home';
+        let currentMediaType = 'none';
+        let uploadedImage = null;
+        let isEditing = false;
+
+        // --- TAMBAH VARIABLE UNTUK SEARCH ---
+        let currentSearchFilter = 'all';
+        let searchStartTime = 0;
+
+        // --- COMPREHENSIVE AI KNOWLEDGE BASE ---
+        const aiKnowledge = {
+            maintenance: {
+                'minyak enjin': {
+                    title: "Cara Check & Tukar Minyak Enjin",
+                    steps: [
+                        "🚗 <b>Persediaan:</b> Pastikan kereta sejuk (minimum 10-15 minit selepas matikan enjin). Park di permukaan rata.",
+                        "🔧 <b>Check Level:</b> Cabut dipstick, lap bersih, masukkan balik, cabut lagi. Level patut antara F (Full) dan L (Low).",
+                        "🛢️ <b>Tambah Minyak:</b> Jika rendah, buka oil cap di atas enjin. Tambah minyak sedikit-sedikit. Jangan overfill!",
+                        "⚙️ <b>Tukar Minyak:</b> Untuk tukar minyak: 1) Panaskan enjin 5 minit 2) Buka oil drain plug 3) Tukar oil filter 4) Isi minyak baru.",
+                        "📝 <b>Tips:</b> Tukar minyak setiap 5,000-10,000 km. Gunakan minyak ikut spesifikasi manual kereta."
+                    ],
+                    tools: "Dipstick, Kain, Minyak Engine, Funnel, Oil Filter Wrench",
+                    time: "Check: 5 minit | Tukar: 30-60 minit"
+                },
+                'tayar': {
+                    title: "Penjagaan Tayar & Tire Pressure",
+                    steps: [
+                        "📏 <b>Check Pressure:</b> Gunakan tire pressure gauge. Check ketika tayar sejuk (sebelum drive).",
+                        "🎯 <b>Pressure Betul:</b> Ikut recommendation di sticker driver's door atau manual. Biasanya 30-35 PSI.",
+                        "👀 <b>Check Condition:</b> Periksa tread depth, sidewall cracks, uneven wear, atau benda asing.",
+                        "🔄 <b>Tire Rotation:</b> Rotate tayar setiap 10,000 km untuk wear yang sekata.",
+                        "⚠️ <b>Safety:</b> Jangan underinflate atau overinflate. Check spare tyre juga!"
+                    ],
+                    tools: "Tire Pressure Gauge, Air Compressor",
+                    time: "5-10 minit setiap bulan"
+                },
+                'aircond': {
+                    title: "Maintenance Aircond Kereta",
+                    steps: [
+                        "🌬️ <b>Bau:</b> Jika ada bau busuk, mungkin cabin air filter kotor. Tukar setiap 15,000-30,000 km.",
+                        "❄️ <b>Cooling:</b> Jika kurang sejuk, check refrigerant level. Mungkin perlu recharge.",
+                        "🔍 <b>Check Leaks:</b> Periksa hose dan connections untuk leaks. Staining atau oli tanda ada leak.",
+                        "💨 <b>Ventilation:</b> Pastikan vents tak tersumbat. Clean dengan compressed air jika perlu.",
+                        "🛠️ <b>Professional:</b> Untuk recharge refrigerant, lebih baik bawa ke bengkel."
+                    ],
+                    tools: "Cabin Air Filter, AC Gauge Set (untuk professional)",
+                    time: "Tukar filter: 15-30 minit"
+                }
+            },
+            
+            problems: {
+                'tak start': {
+                    title: "Kereta Tak Start - Diagnosis & Solution",
+                    steps: [
+                        "🔋 <b>Check Battery:</b> Bunyi 'click-click'? Battery lemah. Try jump start atau charge battery.",
+                        "🔌 <b>Terminals:</b> Periksa terminal battery untuk karat. Bersihkan dengan baking soda + air.",
+                        "⛽ <b>Fuel:</b Ada minyak? Fuel pump working? Dengarkan bunyi 'hum' ketika on ignition.",
+                        "⚡ <b>Spark:</b> Spark plug masalah? Periksa ignition system jika engine crank tapi tak start.",
+                        "🚨 <b>Warning Lights:</b> Check dashboard untuk warning lights. Scan OBD untuk error codes."
+                    ],
+                    solution: "1) Try jump start 2) Check fuel 3) Scan error codes 4) Call mechanic jika masih tak start",
+                    emergency: "Jika stranded, call tow truck. Jangan cuba repair di roadside jika tak berpengalaman."
+                },
+                'overheating': {
+                    title: "Kereta Overheating - Emergency Handling",
+                    steps: [
+                        "🆘 <b>STOP Driving:</b> Jangan teruskan memandu! Overheat boleh rosakkan enjin teruk.",
+                        "🛑 <b>Turn Off:</b> Matikan enjin segera. Jangan buka radiator cap ketika panas!",
+                        "❄️ <b>Cool Down:</b> Biar kereta sejuk 30-60 minit. Buka hood untuk ventilation.",
+                        "💧 <b>Check Coolant:</b> Setelah sejuk, check coolant level di reservoir.",
+                        "🔍 <b>Leaks:</b> Periksa bawah kereta untuk coolant leaks. Check hose dan radiator.",
+                        "🚗 <b>Drive Carefully:</b> Jika coolant rendah, tambah (50/50 coolant + air). Drive perlahan ke bengkel."
+                    ],
+                    warning: "⚠️ JANGAN buka radiator cap ketika panas! Boleh menyebabkan serious burns!",
+                    prevention: "Check coolant level setiap bulan. Servis cooling system setiap 2 tahun."
+                },
+                'bunyi pelik': {
+                    title: "Diagnosis Bunyi Pelik Dari Kereta",
+                    steps: [
+                        "👂 <b>Identify Sound:</b> Di mana bunyi? Depan/belakang? Ketika brake/accelerate/turning?",
+                        "🔊 <b>Grinding:</b> Bunyi grinding ketika brake = brake pads habis. Tukar segera!",
+                        "🗣️ <b>Squealing:</b> Squeal ketika start atau aircond on = belt masalah.",
+                        "🔨 <b>Knocking:</b> Knocking sound dari enjin = serious engine problem. Check oil level.",
+                        "💨 <b>Hissing:</b> Hissing = vacuum leak atau exhaust leak.",
+                        "📝 <b>Note:</b> Rekod bila bunyi terjadi. Video untuk tunjuk mechanic."
+                    ],
+                    action: "Bunyi dari brakes? Check segera! Bunyi dari enjin? Check oil dan bawa check mechanic."
+                }
+            },
+            
+            tools: {
+                'alat asas': {
+                    title: "Alat Asas Untuk DIY Beginner",
+                    items: [
+                        "🔧 <b>Screwdriver Set:</b> Phillips & flat head, berbagai saiz",
+                        "🔩 <b>Wrench Set:</b> Combination wrenches (8mm-19mm)",
+                        "🗜️ <b>Pliers:</b> Slip-joint, needle-nose, dan locking pliers",
+                        "🔨 <b>Hammer:</b> Rubber mallet dan ball-peen hammer",
+                        "📏 <b>Measuring:</b> Tape measure, tire pressure gauge",
+                        "💡 <b>Lighting:</b> Flashlight atau headlamp",
+                        "🧤 <b>Safety:</b> Gloves, safety glasses, jack stands"
+                    ],
+                    budget: "RM200-500 untuk set asas yang decent quality",
+                    tip: "Beli ikut keperluan. Start dengan screwdrivers dan wrenches dulu."
+                },
+                'jack': {
+                    title: "Cara Guna Jack dengan Selamat",
+                    steps: [
+                        "🅿️ <b>Park:</b> Di permukaan rata, keras. Tarik handbrake, letak wheel chocks.",
+                        "📍 <b>Jack Points:</b> Cari titik jack yang betul (rujuk manual). Biasanya di frame rails.",
+                        "⬆️ <b>Lift:</b> Gunakan jack botol atau scissor jack. Angkat perlahan-lahan.",
+                        "⚠️ <b>JACK STANDS:</b> SEBELUM masuk bawah kereta, LETAK JACK STANDS! Ini penting!",
+                        "⬇️ <b>Lower:</b> Lower kereta ke atas jack stands. Jack botol hanya untuk lifting, bukan support!"
+                    ],
+                    warning: "🚫 JANGAN SESEKALI masuk bawah kereta yang hanya disokong jack botol!",
+                    safety: "Selalu gunakan minimum 2 jack stands. Test stability sebelum masuk bawah."
+                }
+            },
+            
+            general: {
+                'beli kereta': {
+                    title: "Tips Beli Kereta Baru/Used",
+                    advice: [
+                        "💰 <b>Budget:</b> Tentukan budget termasuk insurance, road tax, maintenance.",
+                        "🔍 <b>Research:</b> Baca reviews, check reliability ratings, fuel consumption.",
+                        "👁️ <b>Inspection:</b> Untuk used car: check service history, accident records, test drive.",
+                        "🛠️ <b>Maintenance Cost:</b> European cars usually higher maintenance cost daripada Japanese.",
+                        "📈 <b>Resale Value:</b> Toyota/Honda generally better resale value.",
+                        "🚗 <b>Test Drive:</b> Test semua functions: brakes, steering, AC, electronics."
+                    ],
+                    tip: "Bawa mechanic trusted untuk check used car sebelum beli."
+                },
+                'jimat minyak': {
+                    title: "Cara Jimat Minyak Petrol/Diesel",
+                    tips: [
+                        "🐢 <b>Drive Smooth:</b> Elakkan sudden acceleration dan hard braking.",
+                        "⚡ <b>Maintain Speed:</b> 90-100km/h most fuel efficient di highway.",
+                        "🚮 <b>Reduce Weight:</b> Kurangkan barang berat dalam kereta.",
+                        "🌀 <b>Tire Pressure:</b> Maintain correct pressure (check setiap bulan).",
+                        "🛣️ <b>Route Planning:</b> Elakkan traffic jam, gunakan jalan lebih direct.",
+                        "🔧 <b>Maintenance:</b> Servis berkala, clean air filter, gunakan minyak recommended."
+                    ],
+                    savings: "Boleh jimat 15-30% minyak dengan driving habits yang baik!"
+                }
+            }
+        };
+
+        const friendlyResponses = [
+            "Hai boss! 😊 Apa khabar? Saya sedia membantu dengan apa-apa soalan kereta anda!",
+            "Helo! Semoga hari anda ceria! Ada apa-apa nak tanya tentang maintenance kereta?",
+            "Terima kasih boss! 😄 Sama-sama! Kalau ada apa-apa lagi, tanya je ya!",
+            "Bagus! Teruskan minat dalam DIY kereta! 🛠️ Learning never stops!"
+        ];
+
+        const carTips = [
+            "💡 **Tip**: Check tire pressure sekurang-kurangnya sebulan sekali untuk jimat minyak dan keselamatan!",
+            "🔧 **Reminder**: Tukar minyak enjin setiap 5,000-10,000 km bergantung pada jenis minyak dan driving condition.",
+            "⚠️ **Safety**: Sentiasa gunakan jack stands apabila kerja bawah kereta. JACK BOTOL SAHAJA TIDAK SELAMAT!",
+            "🚗 **Efficiency**: Maintain speed 90-100km/h untuk fuel efficiency terbaik di highway.",
+            "💰 **Save Money**: Belajar basic maintenance sendiri boleh jimat beratus-ratus setahun!",
+            "🔋 **Battery Care**: Jika kereta jarang digunakan, start enjin sekurang-kurangnya 15 minit setiap 3 hari.",
+            "🌡️ **Overheating**: Jika kereta overheating, jangan teruskan memandu. Berhenti dan biar enjin sejuk.",
+            "🔍 **Diagnosis**: Selalu perhatikan warning lights di dashboard. Jangan abaikan mereka!",
+            "🛠️ **Tool Tip**: Invest in quality tools sekali. Mereka tahan lama dan lebih selamat.",
+            "📅 **Schedule**: Buat maintenance schedule dan ikutinya untuk elakkan masalah besar."
+        ];
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const icon = document.getElementById('theme-icon');
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                icon.className = 'fas fa-moon';
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.add('dark');
+                icon.className = 'fas fa-sun';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+            document.getElementById('theme-icon').className = 'fas fa-sun';
+        }
+
+        // --- MEDIA HANDLING FUNCTIONS ---
+        function setMediaType(type) {
+            currentMediaType = type;
+            
+            ['none', 'image', 'youtube', 'video'].forEach(t => {
+                const btn = document.getElementById(`media-${t}`);
+                if (btn) {
+                    btn.classList.remove('bg-blue-600', 'text-white');
+                    btn.classList.add('bg-slate-200', 'dark:bg-slate-700', 'text-slate-700', 'dark:text-slate-300');
+                }
+            });
+            
+            const selectedBtn = document.getElementById(`media-${type}`);
+            if (selectedBtn) {
+                selectedBtn.classList.remove('bg-slate-200', 'dark:bg-slate-700', 'text-slate-700', 'dark:text-slate-300');
+                selectedBtn.classList.add('bg-blue-600', 'text-white');
+            }
+            
+            const mediaInputs = document.getElementById('media-inputs');
+            if (mediaInputs) {
+                if (type === 'none') {
+                    mediaInputs.classList.add('hidden');
+                } else {
+                    mediaInputs.classList.remove('hidden');
+                    
+                    ['image', 'youtube', 'video'].forEach(t => {
+                        const input = document.getElementById(`${t}-input`);
+                        const preview = document.getElementById(`${t}-preview`);
+                        if (input) input.classList.add('hidden');
+                        if (preview) preview.classList.add('hidden');
+                    });
+                    
+                    const selectedInput = document.getElementById(`${type}-input`);
+                    if (selectedInput) selectedInput.classList.remove('hidden');
+                }
+            }
+            
+            if (type !== 'image') {
+                uploadedImage = null;
+            }
+        }
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (file.size > 5 * 1024 * 1024) {
+                alert("File terlalu besar! Maksimum 5MB.");
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                uploadedImage = e.target.result;
+                const previewImage = document.getElementById('preview-image');
+                const imagePreview = document.getElementById('image-preview');
+                
+                if (previewImage) {
+                    previewImage.src = uploadedImage;
+                }
+                if (imagePreview) {
+                    imagePreview.classList.remove('hidden');
+                }
+            }
+            reader.readAsDataURL(file);
+        }
+
+        function removeImage() {
+            uploadedImage = null;
+            const fileInput = document.getElementById('file-input');
+            const imagePreview = document.getElementById('image-preview');
+            
+            if (fileInput) fileInput.value = '';
+            if (imagePreview) imagePreview.classList.add('hidden');
+        }
+
+        function extractYouTubeId(url) {
+            if (!url) return '';
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? match[2] : url;
+        }
+
+        // --- NAVIGATION ---
+        function showPage(pageId) {
+            lastPage = pageId;
+            document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active-section'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-nav'));
+
+            const cats = ['maintenance', 'problems', 'tools', 'safety', 'habits', 'knowledge'];
+            if(cats.includes(pageId)) {
+                document.getElementById('page-viewer').classList.add('active-section');
+                document.getElementById('viewer-title').innerText = pageId;
+                renderViewer(pageId);
+                document.getElementById('nav-' + pageId).classList.add('active-nav');
+            } else {
+                document.getElementById('page-' + pageId).classList.add('active-section');
+                document.getElementById('nav-' + pageId).classList.add('active-nav');
+                if(pageId === 'home') renderHome();
+                if(pageId === 'admin') renderAdmin();
+                if(pageId === 'search') {
+                    document.getElementById('search-input').focus();
+                    // Reset search filter
+                    setSearchFilter('all');
+                }
+            }
+            document.getElementById('header-title').innerText = pageId;
+        }
+
+        // --- TAMBAH FUNGSI UNTUK SHOW SEARCH PAGE ---
+        function showSearchPage() {
+            showPage('search');
+        }
+
+        // --- TAMBAH FUNGSI SEARCH ---
+        function setSearchFilter(filter) {
+            currentSearchFilter = filter;
+            
+            // Update button styles
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-600', 'text-white');
+                btn.classList.add('bg-slate-200', 'dark:bg-slate-700', 'text-slate-700', 'dark:text-slate-300');
+            });
+            
+            const activeBtn = document.getElementById(`filter-${filter}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-slate-200', 'dark:bg-slate-700', 'text-slate-700', 'dark:text-slate-300');
+                activeBtn.classList.add('bg-blue-600', 'text-white');
+            }
+            
+            // Perform search with current input
+            performSearch();
+        }
+
+        function handleSearchKeyup(event) {
+            const clearBtn = document.getElementById('clear-search-btn');
+            if (event.target.value.trim().length > 0) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+            
+            if (event.key === 'Enter') {
+                performSearch();
+            }
+        }
+
+        function clearSearch() {
+            const searchInput = document.getElementById('search-input');
+            const clearBtn = document.getElementById('clear-search-btn');
+            searchInput.value = '';
+            clearBtn.classList.add('hidden');
+            performSearch();
+            searchInput.focus();
+        }
+
+        function performSearch() {
+            const searchTerm = document.getElementById('search-input').value.trim().toLowerCase();
+            const clearBtn = document.getElementById('clear-search-btn');
+            
+            // Start timing
+            searchStartTime = performance.now();
+            
+            if (searchTerm.length > 0) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+            
+            // Filter database
+            let results = db;
+            
+            // Apply category filter
+            if (currentSearchFilter !== 'all') {
+                results = results.filter(item => item.cat === currentSearchFilter);
+            }
+            
+            // Apply search term filter
+            if (searchTerm.length > 0) {
+                results = results.filter(item => 
+                    item.title.toLowerCase().includes(searchTerm) ||
+                    item.desc.toLowerCase().includes(searchTerm) ||
+                    (item.tools && item.tools.toLowerCase().includes(searchTerm))
+                );
+            }
+            
+            // Calculate search time
+            const searchTime = (performance.now() - searchStartTime).toFixed(0);
+            
+            // Update stats
+            document.getElementById('search-count').innerHTML = `<span class="font-bold text-blue-600">${results.length}</span> hasil carian ditemui`;
+            document.getElementById('search-time').innerHTML = `<i class="fas fa-clock mr-1"></i> ${searchTime}ms`;
+            
+            // Render results
+            const resultsGrid = document.getElementById('search-results');
+            const noResults = document.getElementById('no-search-results');
+            
+            if (results.length === 0) {
+                resultsGrid.innerHTML = '';
+                noResults.classList.remove('hidden');
+            } else {
+                noResults.classList.add('hidden');
+                resultsGrid.innerHTML = results.map(item => {
+                    // Highlight search term in title
+                    let titleHtml = item.title;
+                    if (searchTerm.length > 0) {
+                        const regex = new RegExp(`(${searchTerm})`, 'gi');
+                        titleHtml = item.title.replace(regex, '<span class="search-highlight">$1</span>');
+                    }
+                    
+                    // Get first line of description for preview
+                    const descPreview = item.desc.split('\n')[0].substring(0, 100) + '...';
+                    
+                    return `
+                        <div class="search-result-item bg-white dark:bg-darkCard p-8 rounded-[2.5rem] shadow-sm border dark:border-slate-800 hover:shadow-2xl transition group relative overflow-hidden cursor-pointer" onclick="showDetailPage(${item.id})">
+                            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-125 transition"><i class="fas fa-wrench text-4xl"></i></div>
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="text-[10px] font-black bg-blue-50 dark:bg-blue-900/20 text-blue-600 px-3 py-1 rounded-full uppercase tracking-widest">${item.cat}</span>
+                                ${item.mediaType !== 'none' ? '<i class="fas fa-paperclip text-slate-400"></i>' : ''}
+                            </div>
+                            <h4 class="text-xl font-extrabold mb-3 group-hover:text-blue-600 transition">${titleHtml}</h4>
+                            <p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed italic line-clamp-3">${descPreview}</p>
+                            
+                            <div class="mt-6 flex justify-between items-center text-xs">
+                                <span class="text-slate-400">
+                                    <i class="fas fa-calendar-alt mr-1"></i>
+                                    ${item.date || 'N/A'}
+                                </span>
+                                <span class="text-blue-500 font-bold group-hover:translate-x-2 transition">
+                                    BACA LENGKAP <i class="fas fa-arrow-right ml-1"></i>
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        // --- DETAIL PAGE FUNCTIONS ---
+        function showDetailPage(itemId) {
+            const item = db.find(i => i.id == itemId);
+            if (!item) return;
+            
+            document.getElementById('detail-title').textContent = item.title;
+            document.getElementById('detail-category').textContent = item.cat;
+            document.getElementById('detail-date').textContent = item.date || 'Tidak ditentukan';
+            
+            const formattedDesc = item.desc.replace(/\n/g, '<br>');
+            document.getElementById('detail-description').innerHTML = formattedDesc;
+            
+            document.getElementById('detail-tools').innerHTML = `<p>${item.tools || 'Bergantung pada masalah spesifik. Biasanya termasuk alat asas seperti screwdriver, wrench, dan alat keselamatan.'}</p>`;
+            document.getElementById('detail-time').innerHTML = `<p>${item.time || '30 minit - 2 jam (bergantung pada pengalaman)'}</p>`;
+            
+            const mediaContainer = document.getElementById('detail-media');
+            mediaContainer.innerHTML = '';
+            
+            if (item.mediaType && item.mediaData && item.mediaType !== 'none') {
+                if (item.mediaType === 'image') {
+                    mediaContainer.innerHTML = `
+                        <div class="mb-8">
+                            <h4 class="text-lg font-bold mb-4 flex items-center gap-3">
+                                <i class="fas fa-image text-blue-500"></i>
+                                <span>Gambar Rujukan</span>
+                            </h4>
+                            <img src="${item.mediaData}" alt="${item.title}" class="w-full h-auto rounded-2xl shadow-lg media-preview">
+                        </div>
+                    `;
+                } else if (item.mediaType === 'youtube') {
+                    const videoId = extractYouTubeId(item.mediaData);
+                    mediaContainer.innerHTML = `
+                        <div class="mb-8">
+                            <h4 class="text-lg font-bold mb-4 flex items-center gap-3">
+                                <i class="fab fa-youtube text-red-500"></i>
+                                <span>Video Tutorial</span>
+                            </h4>
+                            <div class="video-container rounded-2xl overflow-hidden shadow-lg">
+                                <iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                            </div>
+                        </div>
+                    `;
+                } else if (item.mediaType === 'video') {
+                    mediaContainer.innerHTML = `
+                        <div class="mb-8">
+                            <h4 class="text-lg font-bold mb-4 flex items-center gap-3">
+                                <i class="fas fa-video text-blue-500"></i>
+                                <span>Video Demonstrasi</span>
+                            </h4>
+                            <div class="video-container rounded-2xl overflow-hidden shadow-lg">
+                                <video controls class="w-full h-full">
+                                    <source src="${item.mediaData}" type="video/mp4">
+                                    Browser anda tidak support video tag.
+                                </video>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            const iconMap = {
+                maintenance: 'fa-oil-can',
+                problems: 'fa-exclamation-triangle',
+                tools: 'fa-toolbox',
+                safety: 'fa-user-shield',
+                habits: 'fa-gauge-high',
+                knowledge: 'fa-book'
+            };
+            document.getElementById('detail-icon').className = `fas ${iconMap[item.cat] || 'fa-wrench'} text-6xl opacity-20`;
+            
+            document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active-section'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-nav'));
+            document.getElementById('page-detail').classList.add('active-section');
+            document.getElementById('header-title').innerText = 'Detail Tutorial';
+        }
+
+        function goBack() {
+            showPage(lastPage);
+        }
+
+        // --- ADMIN FUNCTIONS ---
+        let isAdm = sessionStorage.getItem('isAdm') === 'true';
+        function openAdmin() {
+            if(isAdm) showPage('admin');
+            else document.getElementById('login-modal').classList.remove('hidden');
+        }
+
+        function processLogin() {
+            if(document.getElementById('adm-user').value === 'admin' && document.getElementById('adm-pass').value === '1234') {
+                isAdm = true;
+                sessionStorage.setItem('isAdm', 'true');
+                document.getElementById('login-modal').classList.add('hidden');
+                document.getElementById('logout-btn').classList.remove('hidden');
+                showPage('admin');
+            } else alert("Salah!");
+        }
+
+        function handleSave() {
+            const id = document.getElementById('edit-id').value;
+            const title = document.getElementById('inp-title').value.trim();
+            const cat = document.getElementById('inp-cat').value;
+            const desc = document.getElementById('inp-desc').value.trim();
+            const tools = document.getElementById('inp-tools').value.trim();
+            const time = document.getElementById('inp-time').value.trim();
+
+            if(!title || !desc) {
+                alert("Isi title dan description!");
+                return;
+            }
+
+            let mediaType = currentMediaType;
+            let mediaData = '';
+            
+            if (currentMediaType === 'image') {
+                if (uploadedImage) {
+                    mediaData = uploadedImage;
+                } else {
+                    if (id) {
+                        const existingItem = db.find(i => i.id == id);
+                        if (existingItem && existingItem.mediaType === 'image' && existingItem.mediaData) {
+                            mediaData = existingItem.mediaData;
+                        } else {
+                            mediaType = 'none';
+                        }
+                    } else {
+                        mediaType = 'none';
+                    }
+                }
+            } else if (currentMediaType === 'youtube') {
+                mediaData = document.getElementById('inp-youtube').value.trim();
+                if (!mediaData) mediaType = 'none';
+            } else if (currentMediaType === 'video') {
+                mediaData = document.getElementById('inp-video').value.trim();
+                if (!mediaData) mediaType = 'none';
+            }
+
+            if(id) {
+                const idx = db.findIndex(i => i.id == id);
+                if (idx !== -1) {
+                    db[idx] = { 
+                        ...db[idx],
+                        title, 
+                        cat, 
+                        desc,
+                        tools: tools || 'Not specified',
+                        time: time || 'Not specified',
+                        mediaType,
+                        mediaData,
+                        date: new Date().toISOString().split('T')[0]
+                    };
+                }
+            } else {
+                const newItem = { 
+                    id: Date.now(), 
+                    title, 
+                    cat, 
+                    desc,
+                    tools: tools || 'Not specified',
+                    time: time || 'Not specified',
+                    mediaType,
+                    mediaData,
+                    date: new Date().toISOString().split('T')[0]
+                };
+                db.unshift(newItem);
+            }
+
+            localStorage.setItem('carMasterDB', JSON.stringify(db));
+            clearForm();
+            renderAdmin();
+            renderHome();
+            alert("Berjaya disimpan!");
+        }
+
+        function deleteItem(id) {
+            if(confirm("SERIUS NAK PADAM?")) {
+                db = db.filter(i => i.id !== id);
+                localStorage.setItem('carMasterDB', JSON.stringify(db));
+                renderAdmin();
+                renderHome();
+                alert("Item telah dipadam!");
+            }
+        }
+
+        function editItem(id) {
+            const item = db.find(i => i.id == id);
+            
+            if (!item) {
+                alert("Item tidak ditemui!");
+                return;
+            }
+            
+            isEditing = true;
+            document.getElementById('edit-id').value = item.id;
+            document.getElementById('inp-title').value = item.title || '';
+            document.getElementById('inp-cat').value = item.cat || 'maintenance';
+            document.getElementById('inp-desc').value = item.desc || '';
+            document.getElementById('inp-tools').value = item.tools || '';
+            document.getElementById('inp-time').value = item.time || '';
+            
+            const mediaType = item.mediaType || 'none';
+            setMediaType(mediaType);
+            
+            if (mediaType === 'image' && item.mediaData) {
+                uploadedImage = item.mediaData;
+                const previewImage = document.getElementById('preview-image');
+                const imagePreview = document.getElementById('image-preview');
+                if (previewImage) previewImage.src = item.mediaData;
+                if (imagePreview) imagePreview.classList.remove('hidden');
+            } else if (mediaType === 'youtube' && item.mediaData) {
+                document.getElementById('inp-youtube').value = item.mediaData;
+                const videoId = extractYouTubeId(item.mediaData);
+                const youtubePreview = document.getElementById('youtube-preview');
+                const previewYoutube = document.getElementById('preview-youtube');
+                if (previewYoutube) previewYoutube.src = `https://www.youtube.com/embed/${videoId}`;
+                if (youtubePreview) youtubePreview.classList.remove('hidden');
+            } else if (mediaType === 'video' && item.mediaData) {
+                document.getElementById('inp-video').value = item.mediaData;
+            }
+            
+            document.getElementById('btn-save').innerText = "KEMASKINI DATA";
+            document.getElementById('btn-cancel').classList.remove('hidden');
+            document.getElementById('admin-form').classList.add('edit-mode');
+            
+            document.getElementById('admin-form').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function cancelEdit() {
+            clearForm();
+            document.getElementById('btn-cancel').classList.add('hidden');
+            document.getElementById('admin-form').classList.remove('edit-mode');
+        }
+
+        function clearForm() {
+            document.getElementById('edit-id').value = '';
+            document.getElementById('inp-title').value = '';
+            document.getElementById('inp-desc').value = '';
+            document.getElementById('inp-tools').value = '';
+            document.getElementById('inp-time').value = '';
+            document.getElementById('btn-save').innerText = "SIMPAN DATA";
+            document.getElementById('btn-cancel').classList.add('hidden');
+            document.getElementById('admin-form').classList.remove('edit-mode');
+            
+            setMediaType('none');
+            uploadedImage = null;
+            document.getElementById('file-input').value = '';
+            document.getElementById('inp-youtube').value = '';
+            document.getElementById('inp-video').value = '';
+            
+            document.getElementById('image-preview')?.classList.add('hidden');
+            document.getElementById('youtube-preview')?.classList.add('hidden');
+        }
+
+        function processLogout() {
+            isAdm = false; 
+            sessionStorage.removeItem('isAdm');
+            document.getElementById('logout-btn').classList.add('hidden');
+            showPage('home');
+        }
+
+        function closeLogin() { 
+            document.getElementById('login-modal').classList.add('hidden'); 
+        }
+
+        // --- RENDERING ---
+        function renderHome() {
+            const grid = document.getElementById('home-grid');
+            if (db.length === 0) {
+                grid.innerHTML = '<p class="text-slate-400 italic col-span-3 text-center py-10">Tiada tutorial lagi.</p>';
+                return;
+            }
+            grid.innerHTML = db.slice(0,6).map(i => createCard(i)).join('');
+        }
+
+        function renderViewer(cat) {
+            const grid = document.getElementById('viewer-grid');
+            const data = db.filter(i => i.cat === cat);
+            grid.innerHTML = data.length ? data.map(i => createCard(i)).join('') : 
+                '<p class="text-slate-400 italic col-span-3 text-center py-10">Tiada tutorial lagi.</p>';
+        }
+
+        function renderAdmin() {
+            const filterValue = document.getElementById('admin-filter')?.value || 'all';
+            const filteredDb = filterValue === 'all' ? db : db.filter(item => item.cat === filterValue);
+            
+            // Update count
+            document.getElementById('filter-count').innerText = `${filteredDb.length} item(s)`;
+            
+            const body = document.getElementById('admin-table-body');
+            if (filteredDb.length === 0) {
+                body.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="p-8 text-center text-slate-400 italic">
+                            Tiada tutorial untuk kategori ini. Mula dengan menambah tutorial baru!
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            body.innerHTML = filteredDb.map(i => {
+                let mediaIcon = '';
+                if (i.mediaType === 'image') mediaIcon = '<i class="fas fa-image text-green-500" title="Image"></i>';
+                else if (i.mediaType === 'youtube') mediaIcon = '<i class="fab fa-youtube text-red-500" title="YouTube"></i>';
+                else if (i.mediaType === 'video') mediaIcon = '<i class="fas fa-video text-blue-500" title="Video"></i>';
+                else mediaIcon = '<i class="fas fa-minus text-slate-400" title="No Media"></i>';
+                
+                return `
+                    <tr class="border-b dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition text-sm">
+                        <td class="p-4 font-bold">${i.title}</td>
+                        <td class="p-4 uppercase text-blue-500 font-black text-[10px]">${i.cat}</td>
+                        <td class="p-4">${mediaIcon}</td>
+                        <td class="p-4 text-right">
+                            <button onclick="editItem(${i.id})" class="text-blue-500 mr-3 hover:text-blue-700" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteItem(${i.id})" class="text-red-500 hover:text-red-700" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function createCard(item) {
+            let mediaBadge = '';
+            if (item.mediaType === 'image') {
+                mediaBadge = '<span class="ml-2 text-[8px] bg-green-100 text-green-800 px-2 py-0.5 rounded-full">IMG</span>';
+            } else if (item.mediaType === 'youtube') {
+                mediaBadge = '<span class="ml-2 text-[8px] bg-red-100 text-red-800 px-2 py-0.5 rounded-full">YT</span>';
+            } else if (item.mediaType === 'video') {
+                mediaBadge = '<span class="ml-2 text-[8px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">VID</span>';
+            }
+            
+            return `
+                <div class="bg-white dark:bg-darkCard p-8 rounded-[2.5rem] shadow-sm border dark:border-slate-800 hover:shadow-2xl transition group relative overflow-hidden cursor-pointer" onclick="showDetailPage(${item.id})">
+                    <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-125 transition"><i class="fas fa-wrench text-4xl"></i></div>
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-[10px] font-black bg-blue-50 dark:bg-blue-900/20 text-blue-600 px-3 py-1 rounded-full uppercase tracking-widest">${item.cat}</span>
+                        ${mediaBadge}
+                    </div>
+                    <h4 class="text-xl font-extrabold mb-3 group-hover:text-blue-600 transition">${item.title}</h4>
+                    <p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed italic line-clamp-3">${item.desc.substring(0, 100)}...</p>
+                    
+                    ${item.mediaType === 'image' && item.mediaData ? 
+                        `<img src="${item.mediaData}" alt="${item.title}" class="mt-4 w-full h-32 object-cover rounded-xl opacity-80 group-hover:opacity-100 transition">` : ''}
+                    
+                    <div class="mt-6 flex justify-between items-center text-xs">
+                        <span class="text-slate-400">
+                            <i class="fas fa-calendar-alt mr-1"></i>
+                            ${item.date || 'N/A'}
+                        </span>
+                        <span class="text-blue-500 font-bold group-hover:translate-x-2 transition">
+                            BACA LENGKAP <i class="fas fa-arrow-right ml-1"></i>
+                        </span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- TAMBAH FUNGSI PRINT PDF DI SINI ---
+        function printToPDF() {
+            const btn = document.getElementById('print-pdf-btn');
+            const originalText = btn.innerHTML;
+            
+            // Tunjukkan loading state
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating PDF...';
+            btn.disabled = true;
+            
+            // Dapatkan data dari detail page
+            const title = document.getElementById('detail-title').textContent;
+            const category = document.getElementById('detail-category').textContent;
+            const date = document.getElementById('detail-date').textContent;
+            const description = document.getElementById('detail-description').innerHTML;
+            const tools = document.getElementById('detail-tools').innerHTML;
+            const time = document.getElementById('detail-time').innerHTML;
+            
+            // Dapatkan tips jika ada
+            const tipsList = document.getElementById('detail-tips');
+            let tipsHTML = '';
+            if (tipsList) {
+                tipsHTML = tipsList.innerHTML;
+            }
+            
+            // Dapatkan media content jika ada
+            const mediaContainer = document.getElementById('detail-media');
+            let mediaHTML = '';
+            if (mediaContainer && mediaContainer.innerHTML.trim() !== '') {
+                mediaHTML = mediaContainer.innerHTML;
+            }
+            
+            // Buat temporary HTML untuk PDF
+            const tempDiv = document.createElement('div');
+            tempDiv.style.position = 'absolute';
+            tempDiv.style.left = '-9999px';
+            tempDiv.style.width = '800px';
+            tempDiv.style.padding = '40px';
+            tempDiv.style.background = 'white';
+            tempDiv.style.color = 'black';
+            tempDiv.style.fontFamily = 'Arial, sans-serif';
+            
+            tempDiv.innerHTML = `
+                <div style="margin-bottom: 30px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <div>
+                            <h1 style="color: #1e40af; font-size: 28px; margin: 0 0 10px 0;">${title}</h1>
+                            <div style="background: #dbeafe; color: #1e40af; display: inline-block; padding: 5px 15px; border-radius: 20px; font-size: 12px; font-weight: bold;">
+                                ${category}
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 14px; color: #666;">VroomFix Elite</div>
+                            <div style="font-size: 12px; color: #999;">DIY Mechanic Portal</div>
+                        </div>
+                    </div>
+                    <div style="color: #666; font-size: 14px; margin-bottom: 20px;">
+                        <i class="fas fa-calendar-alt"></i> Created: ${date}
+                    </div>
+                </div>
+                
+                ${mediaHTML ? `
+                <div style="margin-bottom: 30px; border: 1px solid #e5e7eb; padding: 20px; border-radius: 15px;">
+                    <h3 style="color: #374151; font-size: 18px; margin-bottom: 15px;">
+                        <i class="fas fa-images" style="color: #3b82f6;"></i> Media Reference
+                    </h3>
+                    ${mediaHTML.replace(/class="[^"]*"/g, '').replace(/style="[^"]*"/g, 'style="max-width: 100%;"')}
+                </div>
+                ` : ''}
+                
+                <div style="margin-bottom: 30px;">
+                    <h3 style="color: #374151; font-size: 18px; margin-bottom: 15px;">
+                        <i class="fas fa-list-ol" style="color: #3b82f6;"></i> Step-by-Step Solution
+                    </h3>
+                    <div style="color: #4b5563; line-height: 1.6;">
+                        ${description.replace(/<br\s*\/?>/g, '<br>')}
+                    </div>
+                </div>
+                
+                <div style="background: #eff6ff; padding: 20px; border-radius: 15px; margin-bottom: 30px; border: 1px solid #dbeafe;">
+                    <h4 style="color: #1e40af; font-size: 16px; margin-bottom: 15px;">
+                        <i class="fas fa-lightbulb" style="color: #3b82f6;"></i> Additional Tips
+                    </h4>
+                    <div style="color: #4b5563; font-size: 14px;">
+                        ${tipsHTML || `
+                        <div style="display: flex; align-items: start; gap: 10px; margin-bottom: 10px;">
+                            <i class="fas fa-check" style="color: #10b981;"></i>
+                            <span>Make sure you read all steps before starting</span>
+                        </div>
+                        <div style="display: flex; align-items: start; gap: 10px; margin-bottom: 10px;">
+                            <i class="fas fa-check" style="color: #10b981;"></i>
+                            <span>Use appropriate safety equipment</span>
+                        </div>
+                        <div style="display: flex; align-items: start; gap: 10px;">
+                            <i class="fas fa-check" style="color: #10b981;"></i>
+                            <span>If unsure, consult a professional mechanic</span>
+                        </div>
+                        `}
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 20px; margin-bottom: 30px;">
+                    <div style="flex: 1; background: #f9fafb; padding: 20px; border-radius: 15px; border: 1px solid #e5e7eb;">
+                        <h4 style="color: #374151; font-size: 16px; margin-bottom: 10px;">
+                            <i class="fas fa-tools" style="color: #3b82f6;"></i> Required Tools
+                        </h4>
+                        <div style="color: #6b7280; font-size: 14px;">
+                            ${tools.replace(/<p>/g, '').replace(/<\/p>/g, '')}
+                        </div>
+                    </div>
+                    
+                    <div style="flex: 1; background: #f9fafb; padding: 20px; border-radius: 15px; border: 1px solid #e5e7eb;">
+                        <h4 style="color: #374151; font-size: 16px; margin-bottom: 10px;">
+                            <i class="fas fa-clock" style="color: #3b82f6;"></i> Time Required
+                        </h4>
+                        <div style="color: #6b7280; font-size: 14px;">
+                            ${time.replace(/<p>/g, '').replace(/<\/p>/g, '')}
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #e5e7eb; text-align: center; color: #9ca3af; font-size: 12px;">
+                    <p>Generated by VroomFix Elite | DIY Mechanic Portal</p>
+                    <p>www.vroomfix.com | Contact: support@vroomfix.com</p>
+                    <p>Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</p>
+                </div>
+            `;
+            
+            document.body.appendChild(tempDiv);
+            
+            // Generate PDF
+            setTimeout(() => {
+                html2canvas(tempDiv, {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false
+                }).then(canvas => {
+                    const imgData = canvas.toDataURL('image/png');
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    const imgWidth = 190;
+                    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                    
+                    pdf.setFontSize(20);
+                    pdf.setTextColor(30, 64, 175);
+                    
+                    // Add header
+                    pdf.text("VroomFix Elite - DIY Guide", 105, 15, { align: 'center' });
+                    pdf.setFontSize(10);
+                    pdf.setTextColor(107, 114, 128);
+                    pdf.text("Professional Car Maintenance & Repair Guide", 105, 22, { align: 'center' });
+                    
+                    // Add image
+                    pdf.addImage(imgData, 'PNG', 10, 30, imgWidth, imgHeight);
+                    
+                    // Save PDF
+                    pdf.save(`VroomFix-${title.replace(/[^a-z0-9]/gi, '-')}-${Date.now()}.pdf`);
+                    
+                    // Clean up
+                    document.body.removeChild(tempDiv);
+                    
+                    // Restore button
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    
+                    // Show success message
+                    showPDFSuccess();
+                }).catch(error => {
+                    console.error('PDF generation error:', error);
+                    
+                    // Restore button
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    
+                    // Show error message
+                    alert('Failed to generate PDF. Please try again.');
+                });
+            }, 500);
+        }
+
+        function showPDFSuccess() {
+            // Create success toast
+            const toast = document.createElement('div');
+            toast.id = 'pdf-success-toast';
+            toast.style.position = 'fixed';
+            toast.style.bottom = '100px';
+            toast.style.right = '30px';
+            toast.style.background = '#10b981';
+            toast.style.color = 'white';
+            toast.style.padding = '15px 25px';
+            toast.style.borderRadius = '15px';
+            toast.style.boxShadow = '0 10px 25px rgba(0,0,0,0.2)';
+            toast.style.zIndex = '9999';
+            toast.style.display = 'flex';
+            toast.style.alignItems = 'center';
+            toast.style.gap = '10px';
+            toast.innerHTML = `
+                <i class="fas fa-check-circle" style="font-size: 20px;"></i>
+                <div>
+                    <div style="font-weight: bold;">PDF Generated Successfully!</div>
+                    <div style="font-size: 12px; opacity: 0.9;">Your guide has been downloaded</div>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            // Remove toast after 3 seconds
+            setTimeout(() => {
+                if (document.getElementById('pdf-success-toast')) {
+                    document.body.removeChild(toast);
+                }
+            }, 3000);
+        }
+
+        // --- UPGRADED AI CHAT - ALL ANSWERS IN CHAT ---
+        function showTypingIndicator() {
+            const msgs = document.getElementById('chat-msgs');
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typing-indicator';
+            typingDiv.className = 'ai-message chat-message';
+            typingDiv.innerHTML = `
+                <div class="bg-slate-200 dark:bg-slate-800 p-4 rounded-2xl rounded-tl-none">
+                    <div class="flex items-center gap-2">
+                        <div class="typing-indicator">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
+                        <span class="text-slate-500 dark:text-slate-400 text-xs">VroomFix AI sedang menaip...</span>
+                    </div>
+                </div>
+            `;
+            msgs.appendChild(typingDiv);
+            msgs.scrollTop = msgs.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            const typing = document.getElementById('typing-indicator');
+            if (typing) typing.remove();
+        }
+
+        function findBestMatch(question) {
+            const q = question.toLowerCase();
+            
+            for (const [category, topics] of Object.entries(aiKnowledge)) {
+                for (const [topicKey, topicData] of Object.entries(topics)) {
+                    if (q.includes(topicKey)) {
+                        return { category, topic: topicData, matchType: 'exact' };
+                    }
+                }
+            }
+            
+            const keywords = {
+                'minyak': aiKnowledge.maintenance['minyak enjin'],
+                'oil': aiKnowledge.maintenance['minyak enjin'],
+                'tayar': aiKnowledge.maintenance['tayar'],
+                'tire': aiKnowledge.maintenance['tayar'],
+                'aircond': aiKnowledge.maintenance['aircond'],
+                'ac': aiKnowledge.maintenance['aircond'],
+                'tak start': aiKnowledge.problems['tak start'],
+                'won\'t start': aiKnowledge.problems['tak start'],
+                'overheat': aiKnowledge.problems['overheating'],
+                'panas': aiKnowledge.problems['overheating'],
+                'bunyi': aiKnowledge.problems['bunyi pelik'],
+                'noise': aiKnowledge.problems['bunyi pelik'],
+                'alat': aiKnowledge.tools['alat asas'],
+                'tools': aiKnowledge.tools['alat asas'],
+                'jack': aiKnowledge.tools['jack'],
+                'beli kereta': aiKnowledge.general['beli kereta'],
+                'buy car': aiKnowledge.general['beli kereta'],
+                'jimat': aiKnowledge.general['jimat minyak'],
+                'save fuel': aiKnowledge.general['jimat minyak']
+            };
+            
+            for (const [keyword, topicData] of Object.entries(keywords)) {
+                if (q.includes(keyword)) {
+                    return { category: 'general', topic: topicData, matchType: 'keyword' };
+                }
+            }
+            
+            return null;
+        }
+
+        function getAIResponse(question) {
+            const q = question.toLowerCase();
+            
+            if (q.includes('hai') || q.includes('hello') || q.includes('hi') || q.includes('helo')) {
+                const randomResponse = friendlyResponses[Math.floor(Math.random() * friendlyResponses.length)];
+                return `
+                    <div class="font-bold mb-2 flex items-center gap-2">
+                        <i class="fas fa-robot"></i> VroomFix AI
+                    </div>
+                    <div class="text-sm">
+                        ${randomResponse}
+                        <div class="mt-3 text-blue-600 dark:text-blue-400 text-xs">
+                            <div class="font-bold">Cuba tanya tentang:</div>
+                            <div>• "Cara check minyak enjin"</div>
+                            <div>• "Kereta tak start, kenapa?"</div>
+                            <div>• "Alat apa perlu untuk DIY?"</div>
+                            <div>• "Tips jimat minyak"</div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (q.includes('terima kasih') || q.includes('thanks') || q.includes('thank you')) {
+                return `
+                    <div class="font-bold mb-2 flex items-center gap-2">
+                        <i class="fas fa-robot"></i> VroomFix AI
+                    </div>
+                    <div class="text-sm">
+                        😊 <b>Sama-sama boss!</b> Saya gembira dapat membantu!
+                        <div class="mt-3 text-green-600 dark:text-green-400 text-xs">
+                            <div>Jangan lupa practice safe DIY selalu!</div>
+                            <div>Ada apa-apa lagi, tanya je ya! 💙</div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            const match = findBestMatch(question);
+            
+            if (match) {
+                const { topic } = match;
+                
+                let responseHTML = `
+                    <div class="font-bold mb-2 flex items-center gap-2">
+                        <i class="fas fa-robot"></i> VroomFix AI
+                    </div>
+                    <div class="text-sm">
+                        <div class="font-bold text-lg mb-3 text-blue-600 dark:text-blue-400">${topic.title}</div>
+                `;
+                
+                if (topic.steps) {
+                    responseHTML += `<div class="mb-4">`;
+                    topic.steps.forEach(step => {
+                        responseHTML += `<div class="mb-2">${step}</div>`;
+                    });
+                    responseHTML += `</div>`;
+                }
+                
+                if (topic.advice) {
+                    responseHTML += `<div class="mb-4"><b>Advice:</b>`;
+                    topic.advice.forEach(item => {
+                        responseHTML += `<div class="mb-1 ml-4">${item}</div>`;
+                    });
+                    responseHTML += `</div>`;
+                }
+                
+                if (topic.items) {
+                    responseHTML += `<div class="mb-4"><b>Items Needed:</b>`;
+                    topic.items.forEach(item => {
+                        responseHTML += `<div class="mb-1 ml-4">${item}</div>`;
+                    });
+                    responseHTML += `</div>`;
+                }
+                
+                if (topic.tools) {
+                    responseHTML += `<div class="mb-2"><b>🛠️ Tools:</b> ${topic.tools}</div>`;
+                }
+                
+                if (topic.time) {
+                    responseHTML += `<div class="mb-2"><b>⏱️ Time Required:</b> ${topic.time}</div>`;
+                }
+                
+                if (topic.solution) {
+                    responseHTML += `<div class="mb-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                        <b>✅ Solution:</b> ${topic.solution}
+                    </div>`;
+                }
+                
+                if (topic.warning) {
+                    responseHTML += `<div class="mb-3 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                        <b>⚠️ WARNING:</b> ${topic.warning}
+                    </div>`;
+                }
+                
+                if (topic.prevention) {
+                    responseHTML += `<div class="mb-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                        <b>💡 Prevention:</b> ${topic.prevention}
+                    </div>`;
+                }
+                
+                if (topic.tip) {
+                    responseHTML += `<div class="mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                        <b>💡 Tip:</b> ${topic.tip}
+                    </div>`;
+                }
+                
+                if (topic.emergency) {
+                    responseHTML += `<div class="mb-3 p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                        <b>🚨 Emergency:</b> ${topic.emergency}
+                    </div>`;
+                }
+                
+                if (topic.budget) {
+                    responseHTML += `<div class="mb-3"><b>💰 Estimated Budget:</b> ${topic.budget}</div>`;
+                }
+                
+                if (topic.savings) {
+                    responseHTML += `<div class="mb-3"><b>📈 Potential Savings:</b> ${topic.savings}</div>`;
+                }
+                
+                responseHTML += `
+                        <div class="mt-4 text-xs text-slate-500 dark:text-slate-400 italic">
+                            <b>Note:</b> Sentiasa prioritize safety. Jika tak pasti, rujuk professional mechanic.
+                        </div>
+                    </div>
+                `;
+                
+                return responseHTML;
+            }
+            
+            const dbMatch = db.find(item => 
+                q.includes(item.title.toLowerCase()) || 
+                q.includes(item.cat.toLowerCase()) ||
+                item.title.toLowerCase().includes(q.substring(0, 10))
+            );
+            
+            if (dbMatch) {
+                return `
+                    <div class="font-bold mb-2 flex items-center gap-2">
+                        <i class="fas fa-robot"></i> VroomFix AI
+                    </div>
+                    <div class="text-sm">
+                        <div class="font-bold text-lg mb-3 text-blue-600 dark:text-blue-400">${dbMatch.title}</div>
+                        <div class="mb-3"><b>Category:</b> ${dbMatch.cat}</div>
+                        <div class="mb-3"><b>Steps:</b></div>
+                        <div class="ml-4 mb-3">${dbMatch.desc.replace(/\n/g, '<br>')}</div>
+                        ${dbMatch.tools ? `<div class="mb-2"><b>🛠️ Tools:</b> ${dbMatch.tools}</div>` : ''}
+                        ${dbMatch.time ? `<div class="mb-3"><b>⏱️ Time:</b> ${dbMatch.time}</div>` : ''}
+                        <div class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                            <b>💡 Pro Tip:</b> ${carTips[Math.floor(Math.random() * carTips.length)]}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            const randomTip = carTips[Math.floor(Math.random() * carTips.length)];
+            return `
+                <div class="font-bold mb-2 flex items-center gap-2">
+                    <i class="fas fa-robot"></i> VroomFix AI
+                </div>
+                <div class="text-sm">
+                    <b>🤔 Soalan yang menarik!</b>
+                    <div class="mt-2">Saya cuba faham soalan anda tentang "${question}".</div>
+                    
+                    <div class="mt-4 mb-3 p-3 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                        <b>📚 Saya boleh bantu dengan:</b>
+                        <div class="mt-2 ml-4">
+                            <div>• Maintenance procedures & schedules</div>
+                            <div>• Problem diagnosis & solutions</div>
+                            <div>• Tool recommendations & usage</div>
+                            <div>• Safety guidelines & precautions</div>
+                            <div>• General car care tips</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <b>Cuba tanya lebih spesifik seperti:</b>
+                        <div class="mt-2 ml-4 text-sm">
+                            <div>"Cara check dan tukar minyak enjin"</div>
+                            <div>"Kenapa kereta overheating dan apa nak buat"</div>
+                            <div>"Alat asas apa perlu untuk DIY beginner"</div>
+                            <div>"Tips jimat petrol setiap bulan"</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                        ${randomTip}
+                    </div>
+                    
+                    <div class="mt-3 text-xs text-slate-500 dark:text-slate-400">
+                        Jangan malu-malu tanya lagi! Saya sedia membantu dengan apa-apa tentang kereta! 😊
+                    </div>
+                </div>
+            `;
+        }
+
+        function processChat() {
+            const inp = document.getElementById('chat-input');
+            const msgs = document.getElementById('chat-msgs');
+            const question = inp.value.trim();
+            
+            if(!question) return;
+
+            const userMsg = document.createElement('div');
+            userMsg.className = 'user-message chat-message';
+            userMsg.innerHTML = `
+                <div class="bg-gradient-to-r from-slate-700 to-slate-800 text-white p-4 rounded-2xl rounded-tr-none shadow">
+                    <div class="text-xs text-slate-300 mb-1">You</div>
+                    <div class="text-sm">${question}</div>
+                </div>
+            `;
+            msgs.appendChild(userMsg);
+            
+            inp.value = '';
+            
+            showTypingIndicator();
+            
+            setTimeout(() => {
+                hideTypingIndicator();
+                
+                const aiResponse = getAIResponse(question);
+                const aiMsg = document.createElement('div');
+                aiMsg.className = 'ai-message chat-message';
+                aiMsg.innerHTML = `
+                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-2xl rounded-tl-none shadow-lg">
+                        ${aiResponse}
+                    </div>
+                `;
+                msgs.appendChild(aiMsg);
+                
+                msgs.scrollTop = msgs.scrollHeight;
+            }, 1000 + Math.random() * 1000);
+        }
+
+        function toggleChat() {
+            const chat = document.getElementById('ai-chat');
+            const btn = document.getElementById('ai-chat-btn');
+            
+            isChatOpen = !isChatOpen;
+            
+            if(isChatOpen) {
+                chat.classList.remove('chat-hidden');
+                chat.classList.add('chat-visible');
+                btn.innerHTML = '<i class="fas fa-times"></i>';
+                btn.classList.add('bg-red-500');
+                btn.classList.remove('bg-gradient-to-r', 'from-blue-600', 'to-purple-600');
+                setTimeout(() => {
+                    document.getElementById('chat-input').focus();
+                }, 100);
+            } else {
+                chat.classList.remove('chat-visible');
+                chat.classList.add('chat-hidden');
+                btn.innerHTML = '<i class="fas fa-comment-dots"></i>';
+                btn.classList.remove('bg-red-500');
+                btn.classList.add('bg-gradient-to-r', 'from-blue-600', 'to-purple-600');
+            }
+        }
+
+        function toggleLang() {
+            currentLang = currentLang === 'my' ? 'en' : 'my';
+            document.getElementById('lang-text').innerText = currentLang === 'my' ? "ENGLISH" : "MALAY";
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                el.innerText = langData[currentLang][el.getAttribute('data-i18n')];
+            });
+            renderHome();
+        }
+
+        // Initialize on load
+        window.onload = () => {
+            renderHome();
+            if(isAdm) {
+                document.getElementById('logout-btn').classList.remove('hidden');
+            }
+            
+            setMediaType('none');
+            
+            document.getElementById('chat-input')?.addEventListener('keypress', (e) => {
+                if(e.key === 'Enter') processChat();
+            });
+            
+            document.getElementById('inp-youtube')?.addEventListener('input', function(e) {
+                const url = e.target.value;
+                if (url) {
+                    const videoId = extractYouTubeId(url);
+                    const preview = document.getElementById('preview-youtube');
+                    const youtubePreview = document.getElementById('youtube-preview');
+                    if (videoId && preview) {
+                        preview.src = `https://www.youtube.com/embed/${videoId}`;
+                    }
+                    if (youtubePreview) {
+                        youtubePreview.classList.remove('hidden');
+                    }
+                }
+            });
+            
+            // Initialize search page
+            setSearchFilter('all');
+        };
+    </script>
+</body>
+</html>
