@@ -1,0 +1,70 @@
+    <!-- Main Content -->
+    <main class="ml-72 pt-28 p-10 min-h-screen">
+        
+        <!-- HOME PAGE -->
+        <section id="page-home" class="page-section active-section">
+            <!-- Hero Section -->
+            <div class="bg-gradient-to-br from-blue-600 to-indigo-900 rounded-[3rem] p-12 text-white shadow-2xl relative overflow-hidden mb-12">
+                <div class="relative z-10">
+                    <h2 class="text-5xl font-extrabold mb-4 tracking-tighter" data-i18n="hero_t">Mechanic in Your Pocket.</h2>
+                    <p class="text-blue-100 max-w-lg mb-8 text-lg" data-i18n="hero_s">Belajar selok-belok penjagaan kereta dan baiki kerosakan kecil secara DIY dengan 6 modul lengkap.</p>
+                    <a href="https://www.google.com/maps/search/workshop+near+me" target="_blank" class="bg-white text-blue-700 px-8 py-4 rounded-2xl font-bold inline-flex items-center gap-3 hover:scale-105 transition shadow-xl">
+                        <i class="fas fa-map-marker-alt"></i> <span data-i18n="btn_maps">Cari Bengkel Terdekat</span>
+                    </a>
+                </div>
+                <i class="fas fa-wrench absolute -right-20 -bottom-20 text-[20rem] opacity-10 rotate-12"></i>
+            </div>
+            
+            <!-- SEARCH BAR - HOME PAGE -->
+            <div class="mb-8 flex items-center gap-4">
+                <div class="flex-1 relative">
+                    <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="home-search" placeholder="Cari tutorial (contoh: minyak, tayar, bateri...)" class="w-full pl-12 pr-24 py-4 rounded-2xl bg-white dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 outline-none shadow-lg">
+                    <span id="home-search-count" class="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400"></span>
+                </div>
+                <button onclick="clearHomeSearch()" id="home-clear-search" class="hidden px-4 py-2 bg-slate-200 dark:bg-slate-700 rounded-xl text-sm font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition">
+                    <i class="fas fa-times mr-1"></i> Clear
+                </button>
+            </div>
+            
+            <!-- Tutorial Grid -->
+            <h3 class="text-2xl font-bold mb-8 flex items-center gap-3" data-i18n="latest_db">
+                <span>Tutorial Terkini</span>
+                <span id="home-results-count" class="text-sm font-normal text-slate-500"></span>
+            </h3>
+            <div id="home-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </section>
+
+        <!-- CATEGORY VIEWER PAGE -->
+        <section id="page-viewer" class="page-section">
+            <h2 id="viewer-title" class="text-3xl font-black mb-8 uppercase tracking-tighter">Category</h2>
+            
+            <!-- SEARCH BAR - CATEGORY PAGE -->
+            <div class="mb-8 flex items-center gap-4">
+                <div class="flex-1 relative">
+                    <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="category-search" placeholder="Cari dalam kategori ini..." class="w-full pl-12 pr-24 py-4 rounded-2xl bg-white dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 outline-none shadow-lg">
+                    <span id="category-search-count" class="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400"></span>
+                </div>
+                <button onclick="clearCategorySearch()" id="category-clear-search" class="hidden px-4 py-2 bg-slate-200 dark:bg-slate-700 rounded-xl text-sm font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition">
+                    <i class="fas fa-times mr-1"></i> Clear
+                </button>
+            </div>
+            
+            <div id="viewer-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </section>
+
+        <!-- JavaScript Files -->
+<script src="js/config.js"></script>
+<script src="js/ai-knowledge.js"></script>
+<script src="js/core-functions.js"></script>
+<script src="js/search-functions.js"></script>
+<script src="js/render-functions.js"></script>
+<script src="js/media-functions.js"></script>
+<script src="js/admin-functions.js"></script>
+<script src="js/detail-functions.js"></script>
+<script src="js/pdf-functions.js"></script>
+<script src="js/chat-functions.js"></script>
+<script src="js/init.js"></script>
+</body>
+</html>

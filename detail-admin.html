@@ -1,0 +1,154 @@
+        <!-- DETAIL PAGE -->
+        <section id="page-detail" class="page-section">
+            <button onclick="goBack()" class="detail-back-btn mb-8 flex items-center gap-3 text-blue-600 font-bold text-lg hover:text-blue-800 transition">
+                <i class="fas fa-arrow-left"></i>
+                <span data-i18n="back_btn">Kembali</span>
+            </button>
+            
+            <div class="bg-white dark:bg-darkCard rounded-[2.5rem] shadow-xl border dark:border-slate-800 overflow-hidden">
+                <!-- Detail Header -->
+                <div class="bg-gradient-to-r from-blue-600 to-indigo-700 p-10 text-white">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span id="detail-category" class="text-xs font-black bg-white/20 px-4 py-1.5 rounded-full uppercase mb-3 inline-block tracking-widest">Category</span>
+                            <h1 id="detail-title" class="text-3xl font-extrabold mb-3">Judul Tutorial</h1>
+                            <p class="text-blue-100 text-sm flex items-center gap-2">
+                                <i class="fas fa-calendar-alt"></i>
+                                Ditambah: <span id="detail-date">-</span>
+                            </p>
+                        </div>
+                        <i id="detail-icon" class="fas fa-wrench text-6xl opacity-20"></i>
+                    </div>
+                </div>
+                
+                <div class="p-10">
+                    <!-- Media Display Area -->
+                    <div id="detail-media" class="mb-10"></div>
+                    
+                    <!-- Steps -->
+                    <div class="mb-10">
+                        <h3 class="text-xl font-bold mb-6 flex items-center gap-3 text-slate-700 dark:text-slate-300">
+                            <i class="fas fa-list-ol text-blue-500"></i>
+                            <span>Langkah-langkah Penyelesaian</span>
+                        </h3>
+                        <div id="detail-description" class="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-400 leading-relaxed">
+                            Deskripsi akan dimuat di sini...
+                        </div>
+                    </div>
+                    
+                    <!-- Tips Section -->
+                    <div class="bg-blue-50 dark:bg-blue-900/20 rounded-3xl p-8 border border-blue-100 dark:border-blue-800">
+                        <h4 class="text-lg font-bold mb-4 flex items-center gap-3 text-blue-700 dark:text-blue-400">
+                            <i class="fas fa-lightbulb"></i>
+                            <span>Tips Tambahan</span>
+                        </h4>
+                        <ul id="detail-tips" class="space-y-3 text-sm text-slate-600 dark:text-slate-400">
+                            <li class="flex items-start gap-3">
+                                <i class="fas fa-check text-green-500 mt-1"></i>
+                                <span>Pastikan anda membaca semua langkah sebelum memulakan</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <i class="fas fa-check text-green-500 mt-1"></i>
+                                <span>Gunakan alat keselamatan yang sesuai</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <i class="fas fa-check text-green-500 mt-1"></i>
+                                <span>Jika tidak pasti, rujuk mekanik profesional</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tools & Time -->
+            <div class="mt-10 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-slate-50 dark:bg-slate-800 rounded-2xl p-6">
+                    <h4 class="font-bold mb-4 flex items-center gap-3">
+                        <i class="fas fa-tools text-blue-500"></i>
+                        <span>Alatan Diperlukan</span>
+                    </h4>
+                    <div id="detail-tools" class="text-sm text-slate-600 dark:text-slate-400">
+                        <p>Bergantung pada masalah spesifik. Biasanya termasuk alat asas seperti screwdriver, wrench, dan alat keselamatan.</p>
+                    </div>
+                </div>
+                
+                <div class="bg-slate-50 dark:bg-slate-800 rounded-2xl p-6">
+                    <h4 class="font-bold mb-4 flex items-center gap-3">
+                        <i class="fas fa-clock text-blue-500"></i>
+                        <span>Masa Diperlukan</span>
+                    </h4>
+                    <div id="detail-time" class="text-sm text-slate-600 dark:text-slate-400">
+                        <p>30 minit - 2 jam (bergantung pada pengalaman)</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="mt-10 flex justify-end gap-4">
+                <button onclick="goBack()" class="detail-back-btn flex items-center gap-3 text-blue-600 font-bold p-4 rounded-2xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition">
+                    <i class="fas fa-arrow-left"></i>
+                    <span data-i18n="back_btn">Kembali</span>
+                </button>
+                <button onclick="printToPDF()" id="print-pdf-btn" class="flex items-center gap-3 bg-green-600 text-white font-bold p-4 rounded-2xl hover:bg-green-700 transition">
+                    <i class="fas fa-file-pdf"></i>
+                    <span>Download PDF</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- ADMIN PAGE -->
+        <section id="page-admin" class="page-section">
+            <div class="bg-white dark:bg-darkCard rounded-[2.5rem] shadow-xl border dark:border-slate-800 overflow-hidden">
+                <div class="bg-slate-900 p-8 text-white flex justify-between items-center">
+                    <div>
+                        <h2 class="text-2xl font-bold">Admin Management</h2>
+                        <p class="text-slate-400 text-sm italic">Add, Edit or Delete tutorials with Images & Videos</p>
+                    </div>
+                    <i class="fas fa-tools text-3xl text-blue-500"></i>
+                </div>
+                
+                <div class="p-8">
+                    <!-- Admin Form -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-900/50 p-6 rounded-3xl mb-10 border-2 border-dashed dark:border-slate-700" id="admin-form">
+                        <input type="hidden" id="edit-id">
+                        
+                        <!-- Title Input -->
+                        <div class="md:col-span-2">
+                            <input type="text" id="inp-title" placeholder="Tajuk Masalah / Tutorial" class="w-full p-4 rounded-2xl bg-white dark:bg-slate-800 border-none ring-1 ring-slate-200 dark:ring-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        
+                        <!-- Category Select -->
+                        <select id="inp-cat" class="p-4 rounded-2xl bg-white dark:bg-slate-800 ring-1 ring-slate-200 dark:ring-slate-700 outline-none">
+                            <option value="maintenance">Maintenance</option>
+                            <option value="problems">Problems</option>
+                            <option value="tools">Tools</option>
+                            <option value="safety">Safety</option>
+                            <option value="habits">Habits</option>
+                            <option value="knowledge">Knowledge</option>
+                        </select>
+                        
+                        <!-- Media Type Selector -->
+                        <div class="flex items-center gap-4">
+                            <span class="text-sm font-medium text-slate-600 dark:text-slate-400">Media Type:</span>
+                            <div class="flex gap-2">
+                                <button type="button" onclick="setMediaType('none')" id="media-none" class="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium">None</button>
+                                <button type="button" onclick="setMediaType('image')" id="media-image" class="px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium">Image</button>
+                                <button type="button" onclick="setMediaType('youtube')" id="media-youtube" class="px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium">YouTube</button>
+                                <button type="button" onclick="setMediaType('video')" id="media-video" class="px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium">Video Link</button>
+                            </div>
+                        </div>
+
+                        <!-- JavaScript Files -->
+<script src="js/config.js"></script>
+<script src="js/ai-knowledge.js"></script>
+<script src="js/core-functions.js"></script>
+<script src="js/search-functions.js"></script>
+<script src="js/render-functions.js"></script>
+<script src="js/media-functions.js"></script>
+<script src="js/admin-functions.js"></script>
+<script src="js/detail-functions.js"></script>
+<script src="js/pdf-functions.js"></script>
+<script src="js/chat-functions.js"></script>
+<script src="js/init.js"></script>
+</body>
+</html>

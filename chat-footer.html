@@ -1,0 +1,72 @@
+    <!-- AI Chat Window -->
+    <div id="ai-chat" class="fixed bottom-24 right-6 w-80 md:w-96 bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl border dark:border-slate-800 overflow-hidden z-[100] chat-hidden transition-all duration-300">
+        <!-- Chat Header -->
+        <div class="bg-gradient-to-r from-blue-600 to-purple-600 p-5 text-white flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-robot text-2xl"></i>
+                <div>
+                    <span class="font-bold">VroomFix AI Assistant</span>
+                    <div class="text-xs text-blue-200">Online • Expert in Car Repair</div>
+                </div>
+            </div>
+            <button onclick="toggleChat()" class="hover:bg-blue-700 w-8 h-8 rounded-full flex items-center justify-center">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <!-- Chat Messages -->
+        <div id="chat-msgs" class="h-80 overflow-y-auto p-5 space-y-4 bg-slate-50 dark:bg-slate-950">
+            <div class="ai-message chat-message">
+                <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-2xl rounded-tl-none shadow">
+                    <div class="font-bold mb-1 flex items-center gap-2">
+                        <i class="fas fa-robot"></i> VroomFix AI
+                    </div>
+                    <div class="text-sm">
+                        Hai boss! 👋 Saya AI Assistant VroomFix, pakar dalam DIY car repair dan maintenance. 
+                        Saya akan jawab SEMUA soalan anda dalam chat ini sahaja - tak perlu pergi page lain!
+                        <div class="mt-3 text-blue-200 text-xs">
+                            <div class="font-bold mb-1">Apa saya boleh bantu:</div>
+                            <div>• Maintenance tips & steps</div>
+                            <div>• Problem diagnosis & solutions</div>
+                            <div>• Tool recommendations</div>
+                            <div>• Safety guidelines</div>
+                            <div>• General car knowledge</div>
+                        </div>
+                        <div class="mt-3 text-xs italic">
+                            Tanya apa-apa je! Saya explain full dalam chat ni 😊
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Chat Input -->
+        <div class="p-4 bg-white dark:bg-slate-900 flex gap-2 border-t dark:border-slate-800">
+            <input type="text" id="chat-input" placeholder="Tanya apa-apa tentang kereta..." class="w-full p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500" onkeypress="if(event.key === 'Enter') processChat()">
+            <button onclick="processChat()" class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-5 rounded-2xl hover:opacity-90 transition">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+    
+    <!-- AI Button -->
+    <button onclick="toggleChat()" id="ai-chat-btn" class="fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full shadow-2xl flex items-center justify-center text-2xl z-[99] hover:scale-110 active:scale-90 transition shadow-lg">
+        <i class="fas fa-comment-dots"></i>
+    </button>
+</body>
+</html>
+
+<!-- JavaScript Files -->
+<script src="js/config.js"></script>
+<script src="js/ai-knowledge.js"></script>
+<script src="js/core-functions.js"></script>
+<script src="js/search-functions.js"></script>
+<script src="js/render-functions.js"></script>
+<script src="js/media-functions.js"></script>
+<script src="js/admin-functions.js"></script>
+<script src="js/detail-functions.js"></script>
+<script src="js/pdf-functions.js"></script>
+<script src="js/chat-functions.js"></script>
+<script src="js/init.js"></script>
+</body>
+</html>
